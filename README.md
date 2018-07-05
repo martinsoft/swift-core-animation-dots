@@ -1,6 +1,6 @@
 # Core Animation: Dots #
 
-Simple playground file which demonstrates animates pulsating dots using Core Animation.
+Simple playground file which animates pulsating dots using Core Animation.
 
 This is based on a CSS animation originally made by [Sasha Tran](https://codepen.io/sashatran/pen/vRrxXw).
 
