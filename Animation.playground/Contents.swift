@@ -6,20 +6,12 @@
 import UIKit
 import PlaygroundSupport
 
-let colors = [
-    UIColor(red: 238/255, green: 217/255, blue: 104/255, alpha: 1),
-    UIColor(red: 238/255, green: 206/255, blue: 104/255, alpha: 1),
-    UIColor(red: 238/255, green: 195/255, blue: 104/255, alpha: 1),
-    UIColor(red: 238/255, green: 173/255, blue: 104/255, alpha: 1),
-    UIColor(red: 238/255, green: 140/255, blue: 104/255, alpha: 1),
-]
-
-func createDot(position: CGPoint, color: CGColor, size: CGSize) -> CAShapeLayer {
-    let dot = CAShapeLayer()
+func createDot(position: CGPoint, color: CGColor, size: CGSize) -> CALayer {
+    let dot = CALayer()
+    dot.cornerRadius = size.height / 2.0
+    dot.backgroundColor = color
     dot.bounds = CGRect(origin: .zero, size: size)
     dot.position = position
-    dot.path = UIBezierPath(ovalIn: dot.bounds).cgPath
-    dot.fillColor = color
     return dot
 }
 
@@ -33,7 +25,7 @@ extension CAKeyframeAnimation {
 }
 
 // Component setup
-let (dotSize, dotCount, dotSpacing) = (CGSize(width: 20, height: 20), colors.count, CGFloat(15))
+let (dotCount, dotSize, dotSpacing) = (5, CGSize(width: 20, height: 20), CGFloat(15))
 
 // View setup for playground
 let view = UIView(frame: CGRect(x: 0, y: 0, width: 400, height: 400))
@@ -41,13 +33,13 @@ view.backgroundColor = .white
 PlaygroundPage.current.liveView = view
 
 // Create a layer to contain all the dots - so that we can position the group more easily.
-let container = CALayer()
-container.bounds = CGRect(origin: .zero,
+let wrapper = CAReplicatorLayer()
+wrapper.bounds = CGRect(origin: .zero,
                           size: CGSize(width: (dotSize.width * CGFloat(dotCount)) +
                                               (dotSpacing * CGFloat(dotCount - 1)),
                                        height: dotSize.height))
-container.position = view.center
-view.layer.addSublayer(container)
+wrapper.position = view.center
+view.layer.addSublayer(wrapper)
 
 let pulseAnimation = CAAnimationGroup()
 pulseAnimation.animations = [
@@ -67,17 +59,15 @@ pulseAnimation.animations = [
 pulseAnimation.repeatCount = Float.infinity
 pulseAnimation.duration = 3
 
-for i in (0..<dotCount) {
-    let dotColor = colors[i].cgColor
-    let dotPosition = CGPoint(x: dotSize.width / 2 + CGFloat(i) * (dotSize.width + dotSpacing),
-                              y: dotSize.height / 2)
-    
-    let dot = createDot(position: dotPosition, color: dotColor, size: dotSize)
-    container.addSublayer(dot)
+let firstColor = #colorLiteral(red: 0.9333333333, green: 0.8509803922, blue: 0.4078431373, alpha: 1).cgColor
+let dotPosition = CGPoint(x: dotSize.width / 2, y: dotSize.height / 2)
+let dot = createDot(position: dotPosition, color: firstColor, size: dotSize)
+let pulse = createDot(position: dotPosition, color: firstColor, size: dotSize)
+pulse.add(pulseAnimation, forKey: nil)
 
-    let pulse = createDot(position: dotPosition, color: dotColor, size: dotSize)
-    container.insertSublayer(pulse, below: dot)
-
-    pulseAnimation.beginTime = CACurrentMediaTime() + (Double(i) * 0.2)
-    pulse.add(pulseAnimation, forKey: "pulse")
-}
+wrapper.instanceCount = dotCount
+wrapper.instanceDelay = 0.2
+wrapper.instanceGreenOffset = -0.11
+wrapper.instanceTransform = CATransform3DMakeTranslation(dotSize.width + dotSpacing, 0, 0)
+wrapper.addSublayer(dot)
+wrapper.insertSublayer(pulse, below: dot)
